@@ -24,6 +24,8 @@ node_modules/
 
 # Compiled / generated
 public/dist/
+public/extensions/
+public/bundles/
 dist/
 cache/
 logs/

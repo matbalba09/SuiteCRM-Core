@@ -38,8 +38,8 @@
 # Nx Cache
 /.nx/
 
-# Dependencies
-node_modules
+/.env.local.bak.*
+/.yarn/
 
 # Compiled Output
 /public/
