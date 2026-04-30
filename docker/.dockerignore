@@ -1,0 +1,46 @@
+# =============================================
+# Docker build context exclusions
+# Keep image small & build fast
+# =============================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+.vscode
+.idea
+
+# Host OS
+.DS_Store
+Thumbs.db
+
+# Dependencies (installed inside container)
+vendor/
+node_modules/
+.yarn/cache
+.yarn/install-state.gz
+.yarn/unplugged
+.yarn/build-state.yml
+
+# Compiled / generated
+public/dist/
+dist/
+cache/
+logs/
+*.log
+
+# Test / dev artefacts
+tests/_output/
+tests/_support/_generated/
+.phpunit.result.cache
+.phpunit
+
+# Symfony local envs
+.env.local
+.env.local.php
+.env.test
+.env.test.local
+
+# Docker files themselves
+*.md
+SUITECRM-8.9.3-COMPLETE-DEPLOYMENT-GUIDE.md

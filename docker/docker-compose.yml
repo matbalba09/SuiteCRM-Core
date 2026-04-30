@@ -1,0 +1,135 @@
+# =============================================
+# SuiteCRM 8.9.3 — Docker Compose Stack
+# =============================================
+# Proxied through nginx-proxy-manager (proxy-tier external network)
+# Domain: crm.extendresourcing.com
+# =============================================
+
+services:
+  # ─── MariaDB ─────────────────────────────────
+  mariadb:
+    image: mariadb:10.11
+    container_name: suitecrm-mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-SuiteRoot2026!}
+      MARIADB_DATABASE: ${DB_NAME:-suitecrm}
+      MARIADB_USER: ${DB_USER:-suitecrm}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-SuiteCRM@2026!}
+      MARIADB_CHARACTER_SET: utf8mb4
+      MARIADB_COLLATE: utf8mb4_unicode_ci
+    volumes:
+      - ./mariadb/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - suitecrm_db:/var/lib/mysql
+      - ./data/mariadb-backups:/backups
+    networks:
+      - suitecrm-internal
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-u", "root", "-p${DB_ROOT_PASSWORD:-SuiteRoot2026!}", "--silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb_buffer_pool_size=512M
+      --innodb_log_file_size=128M
+      --innodb_flush_log_at_trx_commit=2
+      --query_cache_size=64M
+      --query_cache_type=1
+      --max_connections=200
+
+  # ─── SuiteCRM (Apache/PHP 8.3) ────────────────
+  suitecrm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: suitecrm-app
+    restart: unless-stopped
+    environment:
+      # ── App ──
+      APP_ENV: ${APP_ENV:-prod}
+      APP_DEBUG: ${APP_DEBUG:-0}
+      APP_SECRET: ${APP_SECRET:-changeme-pls-replace-in-env}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
+
+      # ── Database ──
+      DATABASE_URL: "mysql://${DB_USER:-suitecrm}:${DB_PASSWORD:-SuiteCRM@2026!}@mariadb:3306/${DB_NAME:-suitecrm}?serverVersion=10.11.2-MariaDB&charset=utf8mb4"
+
+      # ── Site ──
+      SITE_URL: ${SITE_URL:-https://crm.extendresourcing.com}
+      SAML_SP_ENTITY_ID: ${SAML_SP_ENTITY_ID:-https://crm.extendresourcing.com}
+
+      # ── Nginx Proxy Manager labels ──
+      VIRTUAL_HOST: ${VIRTUAL_HOST:-crm.extendresourcing.com}
+      VIRTUAL_PORT: 80
+      # Uncomment if NPM uses SSL internally:
+      # HTTPS_METHOD: noredirect
+
+      # ── PHP tuning env overrides ──
+      PHP_UPLOAD_MAX_FILESIZE: 16M
+      PHP_POST_MAX_SIZE: 20M
+      PHP_MEMORY_LIMIT: 512M
+
+    networks:
+      - suitecrm-internal
+      - proxy-tier
+    ports:
+      # Only exposed for direct-access fallback; proxy-tier handles public traffic.
+      - "${SUITECRM_HOST_PORT:-8080}:80"
+    volumes:
+      # ── Application code ──
+      - ../:/var/www/html
+      # ── Persisted runtime directories ──
+      - suitecrm_var:/var/www/html/var
+      - suitecrm_logs:/var/www/html/logs
+      - suitecrm_cache:/var/www/html/cache
+      - suitecrm_public_bundles:/var/www/html/public/bundles
+      # ── Logs ──
+      - ./logs:/var/log/suitecrm
+      # ── Session persistence (optional but recommended) ──
+      - suitecrm_sessions:/var/lib/php/sessions
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  # ─── (Optional) phpMyAdmin ───────────────────
+  #   Useful for ad-hoc database administration.
+  #   Access via nginx-proxy-manager or local port.
+  #────────────────────────────────────────────────
+  # phpmyadmin:
+  #   image: phpmyadmin:5
+  #   container_name: suitecrm-phpmyadmin
+  #   restart: unless-stopped
+  #   environment:
+  #     PMA_HOST: mariadb
+  #     PMA_PORT: 3306
+  #     VIRTUAL_HOST: db.crm.extendresourcing.com
+  #   networks:
+  #     - suitecrm-internal
+  #     - proxy-tier
+  #   depends_on:
+  #     - mariadb
+
+# ─── Networks ─────────────────────────────────
+networks:
+  suitecrm-internal:
+    driver: bridge
+  proxy-tier:
+    external: true
+
+# ─── Named Volumes ────────────────────────────
+volumes:
+  suitecrm_db:
+  suitecrm_var:
+  suitecrm_logs:
+  suitecrm_cache:
+  suitecrm_public_bundles:
+  suitecrm_sessions:
