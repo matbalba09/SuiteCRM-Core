@@ -37,7 +37,7 @@ require_once '${APP_DIR}/vendor/autoload.php';
 ]);
 \$result = \$compiler->compileString(file_get_contents('${APP_DIR}/public/legacy/themes/suite8/css/Dawn/style.scss'));
 file_put_contents('${APP_DIR}/public/legacy/themes/suite8/css/Dawn/style.css', \$result->getCss());
-echo 'Dawn theme compiled: ' . strlen(\$result->getCss()) . \" bytes\n\";
+echo 'Dawn theme compiled: ' . strlen(\$result->getCss()) . \" bytes\\n\";
 " 2>&1 || { log "FATAL: Dawn theme compilation failed."; exit 1; }
 else
     log "Dawn theme CSS already present."
@@ -46,6 +46,7 @@ fi
 # -- 1b. Compile Noon theme CSS (if missing) --
 if [ ! -f "${THEME_DIR}/Noon/style.css" ]; then
     log "Noon theme CSS missing. Compiling via scssphp ..."
+    set +e
     php -r "
 require_once '${APP_DIR}/vendor/autoload.php';
 \$compiler = new ScssPhp\ScssPhp\Compiler();
@@ -55,8 +56,14 @@ require_once '${APP_DIR}/vendor/autoload.php';
 ]);
 \$result = \$compiler->compileString(file_get_contents('${APP_DIR}/public/legacy/themes/suite8/css/Noon/style.scss'));
 file_put_contents('${APP_DIR}/public/legacy/themes/suite8/css/Noon/style.css', \$result->getCss());
-echo 'Noon theme compiled: ' . strlen(\$result->getCss()) . \" bytes\n\";
-" 2>&1 || { log "FATAL: Noon theme compilation failed."; exit 1; }
+echo 'Noon theme compiled: ' . strlen(\$result->getCss()) . \" bytes\\n\";
+" 2>&1
+    NOON_RC=$?
+    set -e
+    if [ "$NOON_RC" -ne 0 ]; then
+        log "WARN: Noon theme compilation failed. Falling back to Dawn CSS ..."
+        cp "${THEME_DIR}/Dawn/style.css" "${THEME_DIR}/Noon/style.css"
+    fi
 else
     log "Noon theme CSS already present."
 fi
