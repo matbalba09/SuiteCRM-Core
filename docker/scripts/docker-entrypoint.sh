@@ -102,7 +102,8 @@ if [ ! -f "${DIST_DIR}/index.html" ]; then
             yarn install --immutable 2>&1 || true
         fi
         # Fix common nested-binary permission issues in bind-mounted node_modules
-        find node_modules -path "*/esbuild*/bin/esbuild" -type f -exec chmod +x {} \; 2>/dev/null || true
+        export NODE_OPTIONS="--max-old-space-size=4096"
+    find node_modules -path.*esbuild.*-exec chmod +x {} \; 2>/dev/null || true
         yarn build 2>&1 || log "WARN: yarn build returned non-zero."
         log "Frontend build finished."
     else

@@ -67,6 +67,9 @@ services:
       # Uncomment if NPM uses SSL internally:
       # HTTPS_METHOD: noredirect
 
+      # ── Node.js build memory limit --
+      NODE_OPTIONS: "--max-old-space-size=4096"
+
       # ── PHP tuning env overrides ──
       PHP_UPLOAD_MAX_FILESIZE: 16M
       PHP_POST_MAX_SIZE: 20M
