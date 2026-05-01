@@ -188,7 +188,7 @@ find "${APP_DIR}" -type d -exec chmod 2755 {} \;
 find "${APP_DIR}" -type f -exec chmod 0644 {} \;
 chmod +x "${APP_DIR}/bin/console"
 
-for d in cache logs var public/bundles public/extensions public/legacy/cache; do
+for d in cache logs var public/bundles public/extensions public/legacy/cache public/legacy/upload public/legacy/custom public/legacy/themes/suite8/css; do
     fullpath="${APP_DIR}/${d}"
     mkdir -p "${fullpath}"
     chown -R www-data:www-data "${fullpath}" || true
@@ -208,7 +208,7 @@ php "${CONSOLE}" cache:clear --no-debug 2>&1 || true
 php "${CONSOLE}" cache:warmup --no-debug 2>&1 || true
 
 log "Fixing ownership for runtime directories ..."
-for d in cache var logs public/bundles public/extensions public/legacy/cache; do
+for d in cache var logs public/bundles public/extensions public/legacy/cache public/legacy/upload public/legacy/custom public/legacy/themes/suite8/css; do
     chown -R www-data:www-data "${APP_DIR}/${d}" 2>/dev/null || true
     chmod -R 775 "${APP_DIR}/${d}" 2>/dev/null || true
 done
