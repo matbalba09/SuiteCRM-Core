@@ -67,15 +67,35 @@ if [ ! -f "${THEME_DIR}/Dawn/style.css" ] || [ ! -f "${THEME_DIR}/Noon/style.css
     exit 1
 fi
 
+# -- 1d. Ensure angular.json exists (required for ng build) --
+if [ ! -f "${APP_DIR}/angular.json" ]; then
+    log "angular.json missing. Regenerating via merge-angular-json ..."
+    cd "${APP_DIR}"
+    if [ ! -d "node_modules" ]; then
+        log "Installing JavaScript dependencies ..."
+        yarn install --immutable 2>&1 || true
+    fi
+    yarn merge-angular-json 2>&1 || log "WARN: merge-angular-json returned non-zero."
+    if [ ! -f "${APP_DIR}/angular.json" ]; then
+        log "FATAL: angular.json could not be generated. Aborting."
+        exit 1
+    fi
+    log "angular.json regenerated successfully."
+else
+    log "angular.json already present."
+fi
+
 # -- 2. Front-end build (run once) --
-if [ ! -d "${DIST_DIR}" ]; then
+if [ ! -f "${DIST_DIR}/index.html" ]; then
     if [ -f "${APP_DIR}/package.json" ]; then
-        log "Frontend dist/ missing. Running Angular production build ..."
+        log "Frontend dist/ missing or incomplete. Running Angular production build ..."
         cd "${APP_DIR}"
         if [ ! -d "node_modules" ]; then
             log "Installing JavaScript dependencies ..."
             yarn install --immutable 2>&1 || true
         fi
+        # Fix common nested-binary permission issues in bind-mounted node_modules
+        find node_modules -path "*/esbuild*/bin/esbuild" -type f -exec chmod +x {} \; 2>/dev/null || true
         yarn build 2>&1 || log "WARN: yarn build returned non-zero."
         log "Frontend build finished."
     else
