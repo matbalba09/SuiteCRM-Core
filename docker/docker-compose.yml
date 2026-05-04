@@ -12,10 +12,10 @@ services:
     container_name: suitecrm-mariadb
     restart: unless-stopped
     environment:
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-SuiteRoot2026!}
-      MARIADB_DATABASE: ${DB_NAME:-suitecrm}
-      MARIADB_USER: ${DB_USER:-suitecrm}
-      MARIADB_PASSWORD: ${DB_PASSWORD:-SuiteCRM@2026!}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
       MARIADB_CHARACTER_SET: utf8mb4
       MARIADB_COLLATE: utf8mb4_unicode_ci
     volumes:
@@ -25,7 +25,7 @@ services:
     networks:
       - suitecrm-internal
     healthcheck:
-      test: ["CMD", "mariadb-admin", "ping", "-u", "root", "-p${DB_ROOT_PASSWORD:-SuiteRoot2026!}", "--silent"]
+      test: ["CMD", "mariadb-admin", "ping", "-u", "root", "-p${DB_ROOT_PASSWORD}", "--silent"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -49,20 +49,27 @@ services:
     restart: unless-stopped
     environment:
       # ── App ──
-      APP_ENV: ${APP_ENV:-prod}
-      APP_DEBUG: ${APP_DEBUG:-0}
-      APP_SECRET: ${APP_SECRET:-changeme-pls-replace-in-env}
-      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
+      APP_ENV: ${APP_ENV}
+      APP_DEBUG: ${APP_DEBUG}
+      APP_SECRET: ${APP_SECRET}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES}
 
       # ── Database ──
-      DATABASE_URL: "mysql://${DB_USER:-suitecrm}:${DB_PASSWORD:-SuiteCRM@2026!}@mariadb:3306/${DB_NAME:-suitecrm}?serverVersion=10.11.2-MariaDB&charset=utf8mb4"
+      DATABASE_URL: "mysql://${DB_USER}:${DB_PASSWORD}@mariadb:3306/${DB_NAME}?serverVersion=10.11.2-MariaDB&charset=utf8mb4"
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
 
       # ── Site ──
-      SITE_URL: ${SITE_URL:-https://crm.extendresourcing.com}
-      SAML_SP_ENTITY_ID: ${SAML_SP_ENTITY_ID:-https://crm.extendresourcing.com}
+      SITE_USERNAME: ${SITE_USERNAME}
+      SITE_PASSWORD: ${SITE_PASSWORD}
+      SITE_URL: ${SITE_URL}
+      SAML_SP_ENTITY_ID: ${SAML_SP_ENTITY_ID}
 
       # ── Nginx Proxy Manager labels ──
-      VIRTUAL_HOST: ${VIRTUAL_HOST:-crm.extendresourcing.com}
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
       VIRTUAL_PORT: 80
       # Uncomment if NPM uses SSL internally:
       # HTTPS_METHOD: noredirect
@@ -80,7 +87,7 @@ services:
       - proxy-tier
     ports:
       # Only exposed for direct-access fallback; proxy-tier handles public traffic.
-      - "${SUITECRM_HOST_PORT:-8080}:80"
+      - "${SUITECRM_HOST_PORT}:80"
     volumes:
       # ── Application code ──
       - ../:/var/www/html

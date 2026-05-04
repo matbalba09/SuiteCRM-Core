@@ -122,14 +122,14 @@ if [ -f "${LEGACY_HTACCESS}" ]; then
 fi
 
 # -- 4. First-time SuiteCRM installation --
-DB_USER="${DB_USER:-suitecrm}"
-DB_PASS="${DB_PASSWORD:-SuiteCRM@2026!}"
-DB_NAME="${DB_NAME:-suitecrm}"
-DB_HOST="${DB_HOST:-mariadb}"
-DB_PORT="${DB_PORT:-3306}"
-SITE_ADMIN="${SITE_USERNAME:-admin}"
-SITE_PASS="${SITE_PASSWORD:-Admin@123!}"
-SITE_HOSTNAME="${SITE_URL:-https://crm.extendresourcing.com}"
+DB_USER="${DB_USER}"
+DB_PASS="${DB_PASSWORD}"
+DB_NAME="${DB_NAME}"
+DB_HOST="${DB_HOST}"
+DB_PORT="${DB_PORT}"
+SITE_ADMIN="${SITE_USERNAME}"
+SITE_PASS="${SITE_PASSWORD}"
+SITE_HOSTNAME="${SITE_URL}"
 
 NEEDS_INSTALL=0
 if [ ! -f "${CONFIG_PHP}" ]; then
@@ -182,7 +182,7 @@ if [ "${NEEDS_INSTALL}" -eq 1 ]; then
     ESCAPED_DB_PASS=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${DB_PASS}', safe=''))" 2>/dev/null || echo "${DB_PASS}")
     cat > "${APP_DIR}/.env.local" <<EOF
 DATABASE_URL="mysql://${DB_USER}:${ESCAPED_DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?serverVersion=10.11.2-MariaDB&charset=utf8mb4"
-APP_SECRET=${APP_SECRET:-$(openssl rand -hex 16)}
+APP_SECRET=${APP_SECRET}
 APP_DEBUG=0
 APP_ENV=prod
 SITE_URL=${SITE_HOSTNAME}
